@@ -1,6 +1,8 @@
 import sys
-from PyQt6.QtWidgets import QApplication,QMainWindow,QHeaderView,QTableWidgetItem
+from PyQt6.QtWidgets import QApplication,QMainWindow,QHeaderView,QTableWidgetItem,QTableWidget,QLabel,QSizePolicy
 from PyQt6 import uic
+from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt
 
 from Computation import BackgroundComputation
 class MainUIClass(QMainWindow):
@@ -10,11 +12,61 @@ class MainUIClass(QMainWindow):
         uic.loadUi(r'C:\Users\Martin Aborgeh\Desktop\Adjustment\MainUI.ui',self)
         self.Inputtable.horizontalHeader().setStretchLastSection(True)
         self.Inputtable.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        stylesheet = "::section{Background-color:rgb(73, 79, 85);color:rgb(0,0,0);font-size:14px;font-weight:bold;border-radius:14px;}"
+        self.Inputtable.horizontalHeader().setStyleSheet(stylesheet)
+        self.comboBoxitem.currentIndexChanged.connect(self.Comboitem)
         self.pushButton.clicked.connect(self.compute)
         self.comp = BackgroundComputation()
         self.actionAdd.triggered.connect(self.openAddParamUI)
         self.paramui.elevation.clicked.connect(self.elevationDetails)
         self.show()
+
+    def initial_table_results(self):
+        self.change_Outputwidget()
+        output_table = QTableWidget()
+        output_table.setRowCount(500)
+        output_table.setColumnCount(5)
+        output_table.setHorizontalHeaderLabels(["STATION","RISE","FALL","CHANGE IN HEIGHT","PROVISIONAL HEIGHT"])
+        output_table.horizontalHeader().setStretchLastSection(True)
+        output_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        stylesheet = "::section{Background-color:rgb(73, 79, 85);color:rgb(0,0,0);font-size:14px;font-weight:bold;border-radius:14px;}"
+        output_table.horizontalHeader().setStyleSheet(stylesheet)
+        self.output_widget.addWidget(output_table)
+
+
+    def change_Outputwidget(self):
+        for i in reversed(range(self.output_widget.count())):
+            widget_item_to_remove = self.output_widget.itemAt(i).widget()
+            self.output_widget.removeWidget(widget_item_to_remove)
+            widget_item_to_remove.setParent(None)
+
+    def Comboitem(self):
+        current_comboitem = self.comboBoxitem.currentText()
+        if current_comboitem == 'Initial Results':
+            self.initial_table_results()
+        elif current_comboitem == 'Observation Matrix':
+            pass
+        elif current_comboitem == 'Absolute Terms':
+            pass
+        elif current_comboitem == 'Most Probable Heights':
+            pass
+        elif current_comboitem == 'Residuals':
+            pass
+        elif current_comboitem == 'Units Variance':
+            pass
+        elif current_comboitem == '99% Confidence Level':
+            pass
+        elif current_comboitem == 'Error Ellipse':
+            pass
+        else:
+            self.change_Outputwidget()
+            label = QLabel("OUTPUT DATA APPEARS HERE")
+            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            label.setSizePolicy(QSizePolicy.Policy.Expanding,QSizePolicy.Policy.Expanding)
+            label.setFont(QFont('Arial',14))
+            label.setStyleSheet("font-weight:bold")
+            self.output_widget.addWidget(label)
+
 
     def retrievedata(self):
         backsight,foresight,remarks,IB = [],[],[],[]
