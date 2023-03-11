@@ -104,6 +104,7 @@ class MainUIClass(QMainWindow):
             self.comp.computeResidual()
             self.comp.computeUniteVariance()
             self.comp.varianceVisualization()
+            self.comp.standard_correction_for_residuals()
             print('Computation successful')
         except Exception:
             self.errorMessage()

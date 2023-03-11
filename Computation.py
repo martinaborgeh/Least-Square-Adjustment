@@ -1,6 +1,7 @@
 # Least Squared Reduction
 import numpy as np
 from sympy import symbols
+import math as m
 import matplotlib.pyplot as plt
 class BackgroundComputation:
     def __init__(self):
@@ -17,6 +18,8 @@ class BackgroundComputation:
         self.unknown = None
         self.residual = None
         self.unitvariance =  None
+        self.N = None
+        self.qij = None
 
     def readDataFromFile(self,data):
         self.tabledata = data
@@ -73,7 +76,7 @@ class BackgroundComputation:
         del coefficient[0][1]
         del coefficient[-1][0]
         size = len(coefficient)
-        print(len(self.tabledata))
+        # print(len(self.tabledata))
         matrix = np.zeros((size, len(self.tabledata)-2), dtype=np.int64)
 
         j = 0
@@ -100,9 +103,9 @@ class BackgroundComputation:
     def computeUnkown(self):
 
         self.weigth_matrx=np.identity(len(self.observation_matrix),dtype=np.int64)
-        N = np.linalg.inv(np.matmul(np.matmul(self.observation_matrix.transpose(), self.weigth_matrx),self.observation_matrix))
+        self.N = np.linalg.inv(np.matmul(np.matmul(self.observation_matrix.transpose(), self.weigth_matrx),self.observation_matrix))
         B = np.matmul(np.matmul(self.observation_matrix.transpose(), self.weigth_matrx),np.reshape(self.absolute_term,(len(self.absolute_term),1)))
-        self.unknown = np.matmul(N,B)
+        self.unknown = np.matmul(self.N,B)
 
     def computeMostProbableHeight(self):
         self.provisional_heights.pop(0)
@@ -116,8 +119,18 @@ class BackgroundComputation:
 
     def computeUniteVariance(self):
         self.unitvariance = np.matmul(self.residual.transpose(),np.matmul(self.weigth_matrx,self.residual))[0][0]/(len(self.observation_matrix)-len(self.unknown))
+        # print(self.unitvariance)
 
 
     def varianceVisualization(self):
         plt.plot(self.residual.flatten())
         plt.show()
+
+    def standard_correction_for_residuals(self):
+        cx_diagonals_square =[m.sqrt(item) for item in self.unitvariance*self.N.diagonal()]
+        cv = self.unitvariance*np.subtract(np.linalg.inv(self.weigth_matrx),np.matmul(np.matmul(self.observation_matrix,self.N),self.observation_matrix.transpose()))
+        cv_diagonals_square = [m.sqrt(item) for item in cv.diagonal()]
+        self.qij = np.subtract(np.linalg.inv(self.weigth_matrx),np.matmul(np.matmul(self.observation_matrix,self.N),self.observation_matrix.transpose()))
+
+
+
