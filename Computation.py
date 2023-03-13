@@ -3,6 +3,7 @@ import numpy as np
 from sympy import symbols
 import math as m
 import matplotlib.pyplot as plt
+import csv
 class BackgroundComputation:
     def __init__(self):
         self.tabledata = None
@@ -19,7 +20,10 @@ class BackgroundComputation:
         self.residual = None
         self.unitvariance =  None
         self.N = None
-        self.qij = None
+        self.remarks = None
+        self.final_output = None
+        self.most_probable_height = None
+
 
     def readDataFromFile(self,data):
         self.tabledata = data
@@ -67,18 +71,16 @@ class BackgroundComputation:
 
     def formObservationEquation(self):
         coefficient=[]
-        remarks = [f'{self.tabledata[i + 1][2]}-{data[2]}'for i,data in enumerate(self.tabledata) if i + 1!=len(self.tabledata)]
+        self.remarks = [f'{self.tabledata[i + 1][2]}-{data[2]}'for i,data in enumerate(self.tabledata) if i + 1!=len(self.tabledata)]
         varinstance = vars()
-        for item in remarks:
+        for item in self.remarks:
             varinstance[item[0]], varinstance[item[2]] = symbols(f"{item[0]},{item[2]}")
             expr = eval(item)
             coefficient.append([expr.coeff(item[0]),expr.coeff(item[2])])
         del coefficient[0][1]
         del coefficient[-1][0]
         size = len(coefficient)
-        # print(len(self.tabledata))
         matrix = np.zeros((size, len(self.tabledata)-2), dtype=np.int64)
-
         j = 0
         for i, item in enumerate(coefficient):
             try:
@@ -96,12 +98,10 @@ class BackgroundComputation:
                         j += 1
                         matrix[i][j] = item[0]
                         matrix[i][j + 1] = item[1]
-
             except Exception : pass
         # print(matrix)
         self.observation_matrix = matrix
     def computeUnkown(self):
-
         self.weigth_matrx=np.identity(len(self.observation_matrix),dtype=np.int64)
         self.N = np.linalg.inv(np.matmul(np.matmul(self.observation_matrix.transpose(), self.weigth_matrx),self.observation_matrix))
         B = np.matmul(np.matmul(self.observation_matrix.transpose(), self.weigth_matrx),np.reshape(self.absolute_term,(len(self.absolute_term),1)))
@@ -110,8 +110,7 @@ class BackgroundComputation:
     def computeMostProbableHeight(self):
         self.provisional_heights.pop(0)
         self.provisional_heights.pop()
-        most_probable_height = self.unknown + np.reshape(np.array(self.provisional_heights),(len(self.provisional_heights),1))
-
+        self.most_probable_height = self.unknown + np.reshape(np.array(self.provisional_heights),(len(self.provisional_heights),1))
 
     def computeResidual(self):
         self.residual = np.matmul(self.observation_matrix,self.unknown)-np.reshape(self.absolute_term,(len(self.absolute_term),1))
@@ -130,7 +129,25 @@ class BackgroundComputation:
         cx_diagonals_square =[m.sqrt(item) for item in self.unitvariance*self.N.diagonal()]
         cv = self.unitvariance*np.subtract(np.linalg.inv(self.weigth_matrx),np.matmul(np.matmul(self.observation_matrix,self.N),self.observation_matrix.transpose()))
         cv_diagonals_square = [m.sqrt(item) for item in cv.diagonal()]
-        self.qij = np.subtract(np.linalg.inv(self.weigth_matrx),np.matmul(np.matmul(self.observation_matrix,self.N),self.observation_matrix.transpose()))
+        qij = np.subtract(np.linalg.inv(self.weigth_matrx),np.matmul(np.matmul(self.observation_matrix,self.N),self.observation_matrix.transpose())).diagonal()
+        perc_confidence_level = 1.96*m.sqrt(self.unitvariance)
+        residual_bar = [abs(data[0])/m.sqrt(data[1]) for data in zip(self.residual.flatten(),qij)]
+        rejected_or_accepted =['accepted' if items <= perc_confidence_level else 'rejected' for items in residual_bar]
+        self.final_output = zip(self.remarks,self.residual.flatten(),qij,residual_bar,[f'{perc_confidence_level}' for i in range(len(qij))],rejected_or_accepted)
+
+    def output(self,file,data,headers):
+        with open(file,'w',newline='') as outputfile:
+            csvwriter = csv.writer(outputfile)
+            csvwriter.writerow(headers)
+            for item in data:
+                csvwriter.writerow(item)
+    def Input(self,file):
+        with open(file,'r') as outputfile:
+            cleaneddata = [data.strip('').strip('\n').split(',') for data in outputfile.readlines()]
+            del cleaneddata[0]
+            return cleaneddata
+
+
 
 
 

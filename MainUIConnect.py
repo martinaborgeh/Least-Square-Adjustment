@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication,QMainWindow,QHeaderView,QTableWidgetItem,QTableWidget,QLabel,QSizePolicy
+from PyQt6.QtWidgets import QApplication,QMainWindow,QHeaderView,QTableWidgetItem,QTableWidget,QLabel,QSizePolicy,QFileDialog
 from PyQt6 import uic
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
@@ -9,6 +9,7 @@ class MainUIClass(QMainWindow):
     def __init__(self):
         super(MainUIClass,self).__init__()
         self.paramui =uic.loadUi(r'C:\Users\Martin Aborgeh\Desktop\Adjustment\Addparamui.ui')
+        self.exportui =uic.loadUi(r'C:\Users\Martin Aborgeh\Desktop\Adjustment\ExportUi.ui')
         uic.loadUi(r'C:\Users\Martin Aborgeh\Desktop\Adjustment\MainUI.ui',self)
         self.Inputtable.horizontalHeader().setStretchLastSection(True)
         self.Inputtable.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -18,7 +19,12 @@ class MainUIClass(QMainWindow):
         self.pushButton.clicked.connect(self.compute)
         self.comp = BackgroundComputation()
         self.actionAdd.triggered.connect(self.openAddParamUI)
+        self.actionExport.triggered.connect(self.export)
+        self.actionImport.triggered.connect(self.Import)
         self.paramui.elevation.clicked.connect(self.elevationDetails)
+        self.exportui.openpath.clicked.connect(self.openexportpath)
+        self.exportui.okbtn.clicked.connect(self.okexport)
+        self.outputpath = None
         self.show()
 
     def initial_table_results(self):
@@ -120,6 +126,51 @@ class MainUIClass(QMainWindow):
         initial_Elevation = self.paramui.lineEdit.text()
         final_Elevation = self.paramui.lineEdit_2.text()
         self.comp.getElevationdetails(initial_Elevation,final_Elevation)
+
+    def openexportpath(self):
+        save, check1 =QFileDialog.getSaveFileName(None,"QFileDialog.getOSaveFileNames()","","All Files(*)")
+        link1=None
+        if check1:
+            link1 = f"{save}{'.csv'}"
+        self.outputpath = link1
+        self.exportui.path.setText(self.outputpath)
+
+
+    def export(self):
+        self.exportui.show()
+
+    def okexport(self):
+        comboitem = self.exportui.exportcomboBox.currentText()
+        if comboitem:
+            if comboitem == 'Input Table':
+                self.retrievedata()
+                self.comp.output(self.outputpath,self.comp.tabledata,("Backsight","Foresight","Remarks"))
+            elif comboitem =='Export Final Output':
+                self.comp.output(self.outputpath,self.comp.final_output,("lines","residuals","qxixi","residual_bar","rejected/accepted"))
+        else:
+            print('choose input item')
+
+    def Import(self):
+        save, check1 = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()", "", "All Files(*)")
+        link1 = None
+        if check1:
+            link1 = save
+        inputdata = self.comp.Input(link1)
+        for i,row in enumerate(inputdata,start=1):
+            print(row)
+            try:
+                self.Inputtable.setItem(i, 0, QTableWidgetItem(row[0]))
+                self.Inputtable.setItem(i, 1, QTableWidgetItem(row[1]))
+                self.Inputtable.setItem(i, 2, QTableWidgetItem(row[2]))
+            except Exception:
+                pass
+
+
+
+
+
+
+
 
 
 
