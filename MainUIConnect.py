@@ -3,14 +3,16 @@ from PyQt6.QtWidgets import QApplication,QMainWindow,QHeaderView,QTableWidgetIte
 from PyQt6 import uic
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
+import os
 
 from Computation import BackgroundComputation
+
 class MainUIClass(QMainWindow):
     def __init__(self):
         super(MainUIClass,self).__init__()
-        self.paramui =uic.loadUi(r'C:\Users\Martin Aborgeh\Desktop\Adjustment\Addparamui.ui')
-        self.exportui =uic.loadUi(r'C:\Users\Martin Aborgeh\Desktop\Adjustment\ExportUi.ui')
-        uic.loadUi(r'C:\Users\Martin Aborgeh\Desktop\Adjustment\MainUI.ui',self)
+        self.paramui =uic.loadUi(rf"{os.path.abspath('Addparamui.ui')}")
+        self.exportui =uic.loadUi(rf"{os.path.abspath('ExportUi.ui')}")
+        uic.loadUi(rf"{os.path.abspath('MainUI.ui')}",self)
         self.Inputtable.horizontalHeader().setStretchLastSection(True)
         self.Inputtable.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         stylesheet = "::section{Background-color:rgb(73, 79, 85);color:rgb(0,0,0);font-size:14px;font-weight:bold;border-radius:14px;}"
@@ -24,20 +26,22 @@ class MainUIClass(QMainWindow):
         self.paramui.elevation.clicked.connect(self.elevationDetails)
         self.exportui.openpath.clicked.connect(self.openexportpath)
         self.exportui.okbtn.clicked.connect(self.okexport)
+        self.table_widget = QTableWidget()
         self.outputpath = None
         self.show()
 
-    def initial_table_results(self):
+
+
+    def initial_table_results(self,row,column,header):
         self.change_Outputwidget()
-        output_table = QTableWidget()
-        output_table.setRowCount(500)
-        output_table.setColumnCount(5)
-        output_table.setHorizontalHeaderLabels(["STATION","RISE","FALL","CHANGE IN HEIGHT","PROVISIONAL HEIGHT"])
-        output_table.horizontalHeader().setStretchLastSection(True)
-        output_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table_widget.setRowCount(row)
+        self.table_widget.setColumnCount(column)
+        self.table_widget.setHorizontalHeaderLabels(header)
+        self.table_widget.horizontalHeader().setStretchLastSection(True)
+        self.table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         stylesheet = "::section{Background-color:rgb(73, 79, 85);color:rgb(0,0,0);font-size:14px;font-weight:bold;border-radius:14px;}"
-        output_table.horizontalHeader().setStyleSheet(stylesheet)
-        self.output_widget.addWidget(output_table)
+        self.table_widget.horizontalHeader().setStyleSheet(stylesheet)
+        self.output_widget.addWidget(self.table_widget)
 
 
     def change_Outputwidget(self):
@@ -49,29 +53,100 @@ class MainUIClass(QMainWindow):
     def Comboitem(self):
         current_comboitem = self.comboBoxitem.currentText()
         if current_comboitem == 'Initial Results':
-            self.initial_table_results()
+            lines = self.comp.remarks
+            change_in_height = self.comp.Change_in_height
+            self.initial_table_results(len(lines)+1,2,["Lines","Change in Height"])
+            inputdata = zip(lines,change_in_height)
+            for i, row in enumerate(inputdata, start=1):
+                try:
+                    self.table_widget.setItem(i, 0, QTableWidgetItem(row[0]))
+                    self.table_widget.setItem(i, 1, QTableWidgetItem(f'{row[1]}'))
+                except Exception:
+                    pass
+
         elif current_comboitem == 'Observation Matrix':
-            pass
+            row,column = self.comp.observation_matrix.shape
+            self.retrievedata()
+            matrix_headers = self.comp.tabledata
+            del matrix_headers[0]
+            del matrix_headers[-1]
+            self.initial_table_results(row+1,column,[data[2] for data in matrix_headers])
+            inputdata = self.comp.observation_matrix
+            for i, row in enumerate(inputdata, start=1):
+                for j,column in enumerate(row):
+                    try:
+                        self.table_widget.setItem(i,j , QTableWidgetItem(f'{column}'))
+                    except Exception:
+                        pass
+
         elif current_comboitem == 'Absolute Terms':
-            pass
+            row = len(self.comp.absolute_term)
+            self.initial_table_results(row+1,1,["Absolute Term"])
+            inputdata = self.comp.absolute_term
+            for i, row in enumerate(inputdata, start=1):
+                try:
+                    self.table_widget.setItem(i, 0, QTableWidgetItem(f'{row}'))
+                except Exception:
+                    pass
+
         elif current_comboitem == 'Most Probable Heights':
-            pass
+            self.retrievedata()
+            matrix_headers = self.comp.tabledata
+            del matrix_headers[0]
+            del matrix_headers[-1]
+            point_names = [data[2] for data in matrix_headers]
+            prov_height =self.comp.provisional_heights
+            corrections = self.comp.unknown
+            mpv = self.comp.most_probable_height
+            self.initial_table_results(len(point_names)+1, 4, ["points","Provisional Height","Correction","Most Probable Height"])
+            inputdata = zip(point_names,prov_height,corrections,mpv)
+            for i, row in enumerate(inputdata, start=1):
+                try:
+                    self.table_widget.setItem(i, 0, QTableWidgetItem(row[0]))
+                    self.table_widget.setItem(i, 1, QTableWidgetItem(f'{row[1]}'))
+                    self.table_widget.setItem(i, 2, QTableWidgetItem(f'{row[2][0]}'))
+                    self.table_widget.setItem(i, 3, QTableWidgetItem(f'{row[3][0]}'))
+                except Exception:
+                    pass
         elif current_comboitem == 'Residuals':
-            pass
+            row,columns = self.comp.residual.shape
+            self.initial_table_results(row+1, columns,["Residuals"])
+            inputdata = self.comp.residual
+            for i, row in enumerate(inputdata, start=1):
+                try:
+                    self.table_widget.setItem(i, 0, QTableWidgetItem(f'{row[0]}'))
+                except Exception:
+                    pass
         elif current_comboitem == 'Units Variance':
-            pass
+            variance = self.comp.unitvariance
+            self.setoutputLabel(f'{variance}')
         elif current_comboitem == '99% Confidence Level':
-            pass
-        elif current_comboitem == 'Error Ellipse':
-            pass
+            confidence_level = self.comp.perc_confidence_level
+            self.setoutputLabel(f'{confidence_level}')
+        elif current_comboitem == 'Final Accuracy Assessment':
+            final_output = self.comp.final_output
+            self.initial_table_results(len(list(final_output))+1, 6,["Lines", "Residual", "Qxixj", "Residual Mean","95% Confidence Level", "Accepted/Rejected"])
+            inputdata = final_output
+            for i, row in enumerate(inputdata, start=1):
+                try:
+                    self.table_widget.setItem(i, 0, QTableWidgetItem(f'{row[0]}'))
+                    self.table_widget.setItem(i, 1, QTableWidgetItem(f'{row[1]}'))
+                    self.table_widget.setItem(i, 2, QTableWidgetItem(f'{row[2]}'))
+                    self.table_widget.setItem(i, 3, QTableWidgetItem(f'{row[3]}'))
+                    self.table_widget.setItem(i, 4, QTableWidgetItem(f'{row[4]}'))
+                    self.table_widget.setItem(i, 5, QTableWidgetItem(f'{row[5]}'))
+                except Exception:
+                    pass
         else:
-            self.change_Outputwidget()
-            label = QLabel("OUTPUT DATA APPEARS HERE")
-            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            label.setSizePolicy(QSizePolicy.Policy.Expanding,QSizePolicy.Policy.Expanding)
-            label.setFont(QFont('Arial',14))
-            label.setStyleSheet("font-weight:bold")
-            self.output_widget.addWidget(label)
+            self.setoutputLabel("OUTPUT DATA APPEARS HERE")
+    def setoutputLabel(self,text):
+        self.change_Outputwidget()
+        label = QLabel(text)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        label.setFont(QFont('Arial', 14))
+        label.setStyleSheet("font-weight:bold")
+        self.output_widget.addWidget(label)
 
 
     def retrievedata(self):
@@ -100,6 +175,7 @@ class MainUIClass(QMainWindow):
 
     def compute(self):
         try:
+
             self.retrievedata()
             self.comp.change_in_Height_Calculation()
             self.comp.provisionHeightComputation()
@@ -111,9 +187,10 @@ class MainUIClass(QMainWindow):
             self.comp.computeUniteVariance()
             self.comp.varianceVisualization()
             self.comp.standard_correction_for_residuals()
-            print('Computation successful')
+            self.statuslabel.setText("Computation successful")
         except Exception:
-            self.errorMessage()
+            self.statuslabel.setText("There is an issue due to wrong data entry. If issue still persists contact the developer on 0549238257(Martin Aborgeh)")
+
 
     def openAddParamUI(self):
         self.paramui.show()
@@ -147,6 +224,37 @@ class MainUIClass(QMainWindow):
                 self.comp.output(self.outputpath,self.comp.tabledata,("Backsight","Foresight","Remarks"))
             elif comboitem =='Export Final Output':
                 self.comp.output(self.outputpath,self.comp.final_output,("lines","residuals","qxixi","residual_bar","rejected/accepted"))
+            elif comboitem == 'Initial Results Table':
+                lines = self.comp.remarks
+                change_in_height = self.comp.Change_in_height
+                self.comp.output(self.outputpath,zip(lines,change_in_height),("Lines","Change in Heights"))
+            elif comboitem == 'Observation Matrix Table':
+                self.retrievedata()
+                matrix_headers = self.comp.tabledata
+                del matrix_headers[0]
+                del matrix_headers[-1]
+                self.comp.output(self.outputpath,[tuple(item) for item in self.comp.observation_matrix],[data[2] for data in matrix_headers])
+            elif comboitem == 'Absolute Terms':
+                self.comp.output(self.outputpath,[(item,) for item in self.comp.absolute_term],["Absolute Terms"])
+            elif comboitem =='Most Probable Height':
+                self.retrievedata()
+                matrix_headers = self.comp.tabledata
+                del matrix_headers[0]
+                del matrix_headers[-1]
+                point_names = [data[2] for data in matrix_headers]
+                prov_height = self.comp.provisional_heights
+                corrections = self.comp.unknown
+                mpv = self.comp.most_probable_height
+                inputdata = zip(point_names, prov_height, corrections.flatten(), mpv.flatten())
+                self.comp.output(self.outputpath,inputdata,("points","Provisional Height","Correction","Most Probable Height"))
+            elif comboitem == 'Residuals':
+                self.comp.output(self.outputpath,[(item,) for item in self.comp.residual.flatten()],["Residual"])
+            elif comboitem == 'Unit Variance':
+                self.comp.output(self.outputpath,[(self.comp.unitvariance,)],["Unit Variance"])
+            elif comboitem == '99 per Confidence Level':
+                self.comp.output(self.outputpath,[(self.comp.perc_confidence_level,)],["Confidence Level",])
+
+
         else:
             print('choose input item')
 
@@ -157,7 +265,6 @@ class MainUIClass(QMainWindow):
             link1 = save
         inputdata = self.comp.Input(link1)
         for i,row in enumerate(inputdata,start=1):
-            print(row)
             try:
                 self.Inputtable.setItem(i, 0, QTableWidgetItem(row[0]))
                 self.Inputtable.setItem(i, 1, QTableWidgetItem(row[1]))

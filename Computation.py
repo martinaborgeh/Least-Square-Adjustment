@@ -23,10 +23,13 @@ class BackgroundComputation:
         self.remarks = None
         self.final_output = None
         self.most_probable_height = None
+        self.perc_confidence_level = None
+        self.unknown_pnts = None
 
 
     def readDataFromFile(self,data):
         self.tabledata = data
+        return
 
     def getElevationdetails(self,initial_elev,final_elev):
         self.initial_Elevation = float(initial_elev)
@@ -101,6 +104,7 @@ class BackgroundComputation:
             except Exception : pass
         # print(matrix)
         self.observation_matrix = matrix
+
     def computeUnkown(self):
         self.weigth_matrx=np.identity(len(self.observation_matrix),dtype=np.int64)
         self.N = np.linalg.inv(np.matmul(np.matmul(self.observation_matrix.transpose(), self.weigth_matrx),self.observation_matrix))
@@ -130,10 +134,10 @@ class BackgroundComputation:
         cv = self.unitvariance*np.subtract(np.linalg.inv(self.weigth_matrx),np.matmul(np.matmul(self.observation_matrix,self.N),self.observation_matrix.transpose()))
         cv_diagonals_square = [m.sqrt(item) for item in cv.diagonal()]
         qij = np.subtract(np.linalg.inv(self.weigth_matrx),np.matmul(np.matmul(self.observation_matrix,self.N),self.observation_matrix.transpose())).diagonal()
-        perc_confidence_level = 1.96*m.sqrt(self.unitvariance)
+        self.perc_confidence_level = 1.96*m.sqrt(self.unitvariance)
         residual_bar = [abs(data[0])/m.sqrt(data[1]) for data in zip(self.residual.flatten(),qij)]
-        rejected_or_accepted =['accepted' if items <= perc_confidence_level else 'rejected' for items in residual_bar]
-        self.final_output = zip(self.remarks,self.residual.flatten(),qij,residual_bar,[f'{perc_confidence_level}' for i in range(len(qij))],rejected_or_accepted)
+        rejected_or_accepted =['accepted' if items <= self.perc_confidence_level else 'rejected' for items in residual_bar]
+        self.final_output = list(zip(self.remarks,self.residual.flatten(),qij,residual_bar,[f'{self.perc_confidence_level}' for i in range(len(qij))],rejected_or_accepted))
 
     def output(self,file,data,headers):
         with open(file,'w',newline='') as outputfile:

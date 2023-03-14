@@ -63,6 +63,46 @@
          <string>Export Final Output</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Initial Results Table</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Observation Matrix Table</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Absolute Terms</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Most Probable Height</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Residuals</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Unit Variance</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>99 per Confidence Level</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string/>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>
