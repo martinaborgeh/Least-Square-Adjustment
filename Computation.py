@@ -71,7 +71,6 @@ class BackgroundComputation:
         change_in_provisional_heights = [data-self.provisional_heights[i+1] for i,data in enumerate(self.provisional_heights) if i+1!= len(self.provisional_heights)]
         self.absolute_term=np.array([data[0]+data[1] for data in zip(self.Change_in_height,change_in_provisional_heights)])
 
-
     def formObservationEquation(self):
         coefficient=[]
         self.remarks = [f'{self.tabledata[i + 1][2]}-{data[2]}'for i,data in enumerate(self.tabledata) if i + 1!=len(self.tabledata)]
@@ -95,14 +94,13 @@ class BackgroundComputation:
 
                 elif len(item) == 2:
                     if i == 1:
-                        matrix[i][j] = item[0]
-                        matrix[i][j + 1] = item[1]
+                        matrix[i][j+1] = item[0]
+                        matrix[i][j] = item[1]
                     else:
                         j += 1
-                        matrix[i][j] = item[0]
-                        matrix[i][j + 1] = item[1]
+                        matrix[i][j+1] = item[0]
+                        matrix[i][j] = item[1]
             except Exception : pass
-        # print(matrix)
         self.observation_matrix = matrix
 
     def computeUnkown(self):
