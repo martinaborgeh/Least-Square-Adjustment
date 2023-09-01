@@ -20,7 +20,7 @@ Follow these steps to set up and run the project:
 
 1. Clone this repository:
 
-      git clone https://github.com/martinaborgeh/Market-Web-App-Backend.git
+      git clone https://github.com/martinaborgeh/Least-Square-Adjustment.git
 
 
 
@@ -30,7 +30,7 @@ Follow these steps to set up and run the project:
 
 4. Install the required dependencies:
 
-pip install numpy, PyQt5,Sympy,
+pip install numpy, PyQt6,Sympy,matplotlib
 
 
 
@@ -39,15 +39,21 @@ pip install numpy, PyQt5,Sympy,
 The project relies on the following dependencies:
 
 - numpy
-- PyQt5
+- PyQt6
 - Sympy
+- matplotlib
 
 
 
 ## Usage
-
-1.  .
-2. node index.js
+### For Local Geoid
+1. Specify the train and test input data in the read_data() method. the train and test sampple is found in the cloned directory 
+2. Running will generate the local geoid model for converting ellipsoidal height to corresponding orthometric heights
+### For Levelling Least Square Adjustment Geoid
+1. Run the MainUiConnect.py file to run the application
+2. Enter or import data from excel
+3. select appropriate output requirement and compute
+4. Export the Error Assessment and the Most probable Height to Excel.
 
 
 
