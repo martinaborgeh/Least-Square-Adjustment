@@ -47,8 +47,8 @@ The project relies on the following dependencies:
 
 ## Usage
 ### For Local Geoid
-1. Specify the train and test input data in the read_data() method. the train and test sampple is found in the cloned directory 
-2. Running will generate the local geoid model for converting ellipsoidal height to corresponding orthometric heights
+1. Specify the train data in the obj.readdata() method and test input data in the read_data() method assigned to the new_data varible in geoid_model() method. the train and test sampple is found in the cloned directory 
+2. Running Local_Geoid will generate the local geoid model for converting ellipsoidal height to corresponding orthometric heights
 ### For Levelling Least Square Adjustment Geoid
 1. Run the MainUiConnect.py file to run the application
 2. Enter or import data from excel
